@@ -2,7 +2,7 @@
 
 # init variables
 version="v.2018.10.09"
-ENDPOINT="https://ttm.sh"
+ENDPOINT="https://envs.sh"
 flag_options="hvcufs::x"
 flag_version=0
 flag_help=0
@@ -24,7 +24,7 @@ pb [options] filename
 or
 (command-with-stdout) | pb
 
-Uploads a file or data to the tilde 0x0 paste bin
+Uploads a file or data to the envs.sh 0x0 paste bin
 
 OPTIONAL FLAGS:
   -h                        Show this help
