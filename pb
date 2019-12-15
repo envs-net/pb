@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # init variables
-version="v.2018.10.09"
+version="v.2019.12.15"
 ENDPOINT="https://envs.sh"
 flag_options="hvcufs::x"
 flag_version=0
