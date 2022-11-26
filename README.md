@@ -1,4 +1,4 @@
-pb ![calver](https://img.shields.io/badge/calver-2020.01.20-22bfda.svg?style=flat-square) ![status](https://img.shields.io/badge/status-working-green.svg?style=flat-square) ![license](https://img.shields.io/badge/license-GPL3-blue.svg?style=flat-square)
+pb ![calver](https://img.shields.io/badge/calver-2022.11.03-22bfda.svg?style=flat-square) [![Build Status](https://drone.tildegit.org/api/badges/tomasino/pb/status.svg)](https://drone.tildegit.org/tomasino/pb) ![license](https://img.shields.io/badge/license-GPL3-blue.svg?style=flat-square)
 ------
 
 **pb** is a helper utility for using 0x0 pastebin services
@@ -33,33 +33,50 @@ Upload a file to a different pastebin endpoint
 pb -s http://0x0.st scores.txt
 ```
 
-Shorten a URL
+Re-upload an image from the web
 
 ```bash
-pb -u https://google.com
+curl -s https://tildegit.org/_/static/img/gitea-lg.png | pb -e "png"
 ```
 
 ### Options
 
 ```bash
-  -h                        Show this help
-  -v                        Show current version number
-  -f                        Explicitly interpret stdin as filename
-  -c                        Pretty color output
-  -u                        Shorten URL
-  -s server_address         Use alternative pastebin server address
+-h | --help)                    Show this help
+-v | --version)                 Show current version number
+-f | --file)                    Explicitly interpret stdin as filename
+-c | --color)                   Pretty color output
+-s | --server server_address)   Use alternative pastebin server address
+-e | --extension bin_extension) Specify file extension used in the upload
 ```
 
 ### Install
 
-`sudo make install`
+On GNU systems:
 
-_Note: On systems without admin access the binary can be run directly from the
-git repo, but will lack `man` support and command completion._
+```sh
+sudo make install
+```
+
+On BSD systems:
+
+The man-path `/usr/local/share/man` is not indexed by default on openbsd. Using the `/usr` prefix works around this issue.
+
+```sh
+doas make PREFIX=/usr install
+```
 
 ### Uninstall
 
-`sudo make uninstall`
+```sh
+sudo make uninstall
+```
+
+On BSD systems:
+
+```sh
+doas make PREFIX=/usr uninstall
+```
 
 ## Contributing
 

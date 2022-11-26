@@ -1,11 +1,11 @@
-.TH PB 1 "20 January 2020" "v2020.01.20"
+.TH PB 1 "03 November 2022" "v2022.11.03"
 
 .SH NAME
 pb \- a helper utility for using 0x0 pastebin services
 
 .SH SYNOPSIS
 .B pb
-[-fucvh] [-s server_endpoint]
+[-fucvh] [-s server_endpoint] [-e bin_extension]
 .P
 
 .SH DESRIPTION
@@ -16,8 +16,8 @@ comes pre-configured with a specific pastebin, the
 service endpoint can be overridden.
 
 Data input can be provided as an argument or via stdin.
-The data will be processed as an image, text or URL to
-be shortened based on the context.
+The data will be processed as binary or text
+based on the context.
 
 Default Server:
 .B https://envs.sh
@@ -31,8 +31,10 @@ Explicitly interpret stdin as filename or names.
 .BI -s " server_address"
 Use alternative pastebin server address.
 .TP
-.B -u
-Shorten a URL.
+.BI -e " bin_extension"
+Specifes the file extension used in the upload of binary content passed to
+.B pb
+via standard input.
 .TP
 .B -c
 Pretty color output.
@@ -65,18 +67,13 @@ Upload a list of files to the pastebin individually
 .B pb -s http://0x0.st scores.txt
 Upload a file to a different pastebin endpoint
 .TP
-.B pb -u 'https://duckduckgo.com'
-Shorten the URL to envs.sh
+.B curl -s https://some/image/file.png | pb -e "png"
+Download a binary file and re-upload it to the pastebin with an explicit binary
+type and extension.
 
 .SH BUGS
 Report issues at the git repository at
 .B https://tildegit.org/tomasino/pb
 
-.SH STANDARDS
-The
-.B pb
-utility is compliant with the IEEE Std 1003.1-2008 ("POSIX.1")
-specification.
-
 .SH AUTHOR
-James Tomasino <tomasino (at) lavabit (dot) com>
+James Tomasino <james (at) tomasino (dot) org>

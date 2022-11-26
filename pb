@@ -1,16 +1,17 @@
 #!/bin/sh
 
 # init variables
-version="v2020.01.20"
+version="v2022.11.03"
 ENDPOINT="https://envs.sh"
-flag_options="hvcufs::x"
+flag_options=":hvcfe:s:"
+long_flag_options="help,version,color,file,extension:,server:"
 flag_version=0
 flag_help=0
 flag_file=0
-flag_url=0
-flag_shortlist=0
 flag_colors=0
+flag_ext=0
 data=""
+EXT=""
 
 # help message available via func
 show_help() {
@@ -22,12 +23,18 @@ or
 Uploads a file or data to the envs.sh 0x0 paste bin
 
 OPTIONAL FLAGS:
-  -h                        Show this help
-  -v                        Show current version number
-  -f                        Explicitly interpret stdin as filename
-  -c                        Pretty color output
-  -u                        Shorten URL
-  -s server_address         Use alternative pastebin server address
+  -h | --help)                    Show this help
+  -v | --version)                 Show current version number
+  -f | --file)                    Explicitly interpret stdin as filename
+  -c | --color)                   Pretty color output
+  -s | --server server_address)   Use alternative pastebin server address
+  -e | --extension bin_extension) Specify file extension used in the upload
+END
+}
+
+show_usage() {
+  cat > /dev/stdout << END
+usage: pb [-hfvcux] [-s server_address] filename
 END
 }
 
@@ -50,59 +57,29 @@ die () {
   exit "${code}"
 }
 
-# is not interactive shell, use stdin
-if [ -t 0 ]; then
-  flag_file=1
-else
-  data="$(cat < /dev/stdin )"
-fi
-
 # attempt to parse options or die
-if ! parsed=$(getopt ${flag_options} "$@"); then
-  die "Invalid input" 2
+if ! PARSED_ARGUMENTS=$(getopt -a -n pb -o ${flag_options} --long ${long_flag_options} -- "$@"); then
+  printf "pb: unknown option\\n"
+  show_usage
+  exit 2
 fi
 
-# handle options
-eval set -- "${parsed}"
-while true; do
+# For debugging: echo "PARSED_ARGUMENTS is $PARSED_ARGUMENTS"
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do
   case "$1" in
-    -h)
-      flag_help=1
-      ;;
-    -v)
-      flag_version=1
-      ;;
-    -c)
-      flag_colors=1
-      ;;
-    -f)
-      flag_file=1
-      ;;
-    -s)
-      shift
-      ENDPOINT="$1"
-      ;;
-    -u)
-      flag_url=1
-      ;;
-    -x)
-      flag_shortlist=1
-      ;;
-    --)
-      shift
-      break
-      ;;
-    *)
-      die "Internal error: $1" 3
-      ;;
+    -h | --help)      flag_help=1                  ; shift   ;;
+    -v | --version)   flag_version=1               ; shift   ;;
+    -c | --color)     flag_color=1                 ; shift   ;;
+    -f | --file)      flag_file=1                  ; shift   ;;
+    -e | --extension) flag_ext=1;    EXT="$2"      ; shift 2 ;;
+    -s | --server)                   ENDPOINT="$2" ; shift 2 ;;
+    --) shift; break ;;
+    *) echo "Unexpected option: $1 - this should not happen."
+       show_usage ; die 3 ;;
   esac
-  shift
 done
-
-# if data variable is empty (not a pipe) use params as fallback
-if [ -z "$data" ]; then
-  data="$*"
-fi
 
 # display current version
 if [ ${flag_version} -gt 0 ]; then
@@ -116,13 +93,23 @@ if [ ${flag_help} -gt 0 ]; then
   die "" 0
 fi
 
-# shortlist used for bash command completion
-if [ ${flag_shortlist} -gt 0 ]; then
-  out="-f -v -h -s -c -u"
-  lsresults="$(ls)"
-  die "${out} ${lsresults}" 0
+# is not interactive shell, use stdin
+if [ -t 0 ]; then
+  flag_file=1
+else
+  if [ ${flag_ext} -gt 0 ]; then
+    # short-circuit stdin access to ensure binary data is transferred to curl
+    curl -sF"file=@-;filename=null.${EXT}" "${ENDPOINT}" < /dev/stdin
+    exit 0
+  else
+    data="$(cat < /dev/stdin )"
+  fi
 fi
 
+# if data variable is empty (not a pipe) use params as fallback
+if [ -z "$data" ]; then
+  data="$*"
+fi
 
 # Colors
 if [ ${flag_colors} -gt 0 ]; then
@@ -133,24 +120,6 @@ else
   SUCCESS=""
   ERROR=""
   RESET=""
-fi
-
-# URL shortening reference
-
-# If URL mode detected, process URL shortener and end processing without
-# checking for a file to upload to the pastebin
-if [ ${flag_url} -gt 0 ]; then
-
-  if [ -z "${data}" ]; then
-    # if no data
-    # print error message
-    printf "%sProvide URL to shorten%s\\n" "$ERROR" "$RESET"
-  else
-    # shorten URL and print results
-    result=$(curl -sF"shorten=${data}" "${ENDPOINT}")
-    printf "%s%s%s\\n" "$SUCCESS" "$result" "$RESET"
-  fi
-  die "" 0
 fi
 
 if [ ${flag_file} -gt 0 ]; then
@@ -171,8 +140,13 @@ if [ ${flag_file} -gt 0 ]; then
       fi
       # check if file exists
       if [ -f "${f}" ]; then
-        # send file to endpoint
-        result=$(curl -sF"file=@${f}" "${ENDPOINT}")
+        if [ ${flag_ext} -gt 0 ]; then
+          # send file to endpoint masked with new extension
+          result=$(curl -sF"file=@${f};filename=null.${EXT}" "${ENDPOINT}")
+        else
+          # send file to endpoint
+          result=$(curl -sF"file=@${f}" "${ENDPOINT}")
+        fi
         printf "%s%s%s\\n" "$SUCCESS" "$result" "$RESET"
       else
         # print error message
@@ -193,7 +167,7 @@ else
     printf "%sNo data found for upload. Please try again.%s\\n" "$ERROR" "$RESET"
   else
     # data available
-    # send data to endpoint, print short url
+    # send data to endpoint
     result=$(printf "%s" "${data}" | curl -sF"file=@-;filename=null.txt" "${ENDPOINT}")
     printf "%s%s%s\\n" "$SUCCESS" "$result" "$RESET"
   fi
