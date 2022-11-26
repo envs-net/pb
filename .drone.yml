@@ -23,4 +23,4 @@ steps:
       commands:
         - cd /opt/services/pb
         - sudo -Hu services git pull origin master
-        - sudo -Hu root make
+        - sudo -Hu root make install
